@@ -8,7 +8,8 @@ FSJS project 2 - List Filter and Pagination
 */
 const studentListUl = document.querySelector('ul.student-list');
 const studentList = studentListUl.children;
-const page = document.querySelector('div.page');
+let filterList = studentList;
+const mainPage = document.querySelector('div.page');
 const pageHeader = document.querySelector('div.page-header.cf');
 
 /*
@@ -19,15 +20,29 @@ const searchBoxDiv = document.createElement('div');
 const searchForm = document.createElement('form');
 const searchInput = document.createElement('input');
 const searchButton = document.createElement('button');
+const searchResult = document.createElement('div');
+const searchResultMessage = document.createElement('h1');
 //add attributes
 searchBoxDiv.className = "student-search";
 searchInput.placeholder = "Search for students...";
 searchButton.textContent = "Search";
+searchResult.style.display = "none";
+searchResult.style.textAlign = "center";
+searchResultMessage.textContent = "No results have been found.";
+searchResultMessage.style.fontSize = "1.5em";
+searchResultMessage.style.color = "red";
 //append searchBox
 pageHeader
     .appendChild(searchBoxDiv)
     .appendChild(searchForm)
     .append(searchInput, searchButton);
+
+//append searchMessage and hide
+
+mainPage
+    .appendChild(searchResult)
+    .appendChild(searchResultMessage);
+
 /*
 end Build Seach Box
 */
@@ -56,16 +71,24 @@ const showPage = (list, page) => {
 
     hideAll();
 
-    let pageStart = 10 * page - 10;
-    let pageEnd = 10 * page;
+    if (page !== 0) {
+        //hide message
+        searchResult.style.display = "none";
 
-    //ternary to test if pageEnd is greater than actually number of student
-    pageEnd = (list.length > pageEnd)
-        ? pageEnd
-        : list.length;
+        let pageStart = 10 * page - 10;
+        let pageEnd = 10 * page;
 
-    for (let i = pageStart; i < pageEnd; i += 1) {
-        list[i].style.display = "block";
+        //ternary to test if pageEnd is greater than actually number of student
+        pageEnd = (list.length > pageEnd)
+            ? pageEnd
+            : list.length;
+
+        for (let i = pageStart; i < pageEnd; i += 1) {
+            list[i].style.display = "block";
+        }
+    } else {
+        //show error message
+        searchResult.style.display = "block";
     }
 }
 
@@ -118,7 +141,7 @@ const paginationUl = document.createElement('ul');
 //add attributes
 pagination.className = "pagination";
 //append pagination
-page.appendChild(pagination);
+mainPage.appendChild(pagination);
 pagination.appendChild(paginationUl);
 
 const addLinks = (list) => {
@@ -135,7 +158,7 @@ end Pagination
 
 paginationUl.addEventListener('click', (event) => {
     let pageId = parseInt(event.target.textContent);
-    showPage(studentList, pageId);
+    showPage(filterList, pageId);
     addActive(pageId);
 });
 
@@ -158,6 +181,7 @@ searchInput.addEventListener('keyup', (evt) => {
     let keyword = evt.target.value;
 
     if (keyword === "") {
+        filterList = studentList;
         renderList(studentList);
     } else {
         filterByKeyword(keyword);
@@ -165,7 +189,7 @@ searchInput.addEventListener('keyup', (evt) => {
 });
 
 const filterByKeyword = (keyword) => {
-    let newList = [];
+    filterList = [];
     for (let i = 0; i < studentList.length; i += 1) {
         let studentName = studentList[i]
             .querySelector('div h3')
@@ -174,22 +198,29 @@ const filterByKeyword = (keyword) => {
         let studentEmail = studentList[i]
             .querySelector('div span.email')
             .textContent;
+
         if (studentName.search(keyword) !== -1 || studentEmail.search(keyword) !== -1) {
-            newList.push(studentList[i]);
+            studentList[i]
+                .classList
+                .add('filter');
+
+            filterList.push(studentList[i]);
         }
     }
 
-    if (newList.length > 0) {
-        renderList(newList);
-    }
-
+    renderList(filterList);
 }
 
 const renderList = (list) => {
-    showPage(list, 1);
-    removeLinks();
-    addLinks(list);
-    addActive(1);
+    if (list.length > 0) {
+        showPage(list, 1);
+        removeLinks();
+        addLinks(list);
+        addActive(1);
+    } else {
+        showPage(list, 0);
+        removeLinks();
+    }
 }
 /*
 Wait for DOM for load
